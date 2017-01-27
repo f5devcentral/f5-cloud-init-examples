@@ -1,0 +1,279 @@
+description: F5 Heat Template to Orchestrate a 2 NIC TMOS Active/Standby VE Cluster - w Floating IPs for MGMT Port
+heat_template_version: '2015-10-15'
+parameters:
+  f5_ve_os_mgmt_network:
+    constraints:
+    - {custom_constraint: neutron.network}
+    default: None
+    description: Neutron network for the VE management interface.
+    label: F5 VE Management Network
+    type: string
+  f5_ve_os_external_network: {default: public, description: Specify a specific Neutron
+      external network for managment interface Floating IP creation., label: F5 VE
+      External Network, type: string}
+  f5_ve_os_ha_network:
+    constraints:
+    - {custom_constraint: neutron.network}
+    default: None
+    description: Neutron network for the VE HA config sycn and mirroring interface.
+    label: F5 VE HA Network
+    type: string
+  f5_ve_os_ha_network_mtu:
+    constraints:
+    - range: {max: 9000, min: 1}
+    default: 1450
+    label: F5 VE HA network MTU
+    type: number
+  f5_ve_os_network_1:
+    constraints:
+    - {custom_constraint: neutron.network}
+    default: None
+    description: Neutron network for the VE 1.2 data interface.
+    label: F5 VE 1.2 Network
+    type: string
+  f5_ve_os_network_1_mtu:
+    constraints:
+    - range: {max: 9000, min: 1}
+    default: 1450
+    label: F5 VE 1.2 network MTU
+    type: number
+  f5_ve_os_network_1_name: {default: internal, description: TMM network name for the
+      untagged VLAN associated with the 1.2 data interface., label: F5 VE Network
+      Name for the 1.2 Interface, type: string}
+  f5_ve_root_password:
+    constraints:
+    - {allowed_pattern: '[a-zA-Z0-9_-]*', description: 'Password in templates are
+        limited to alpha, numeric, underscore, and dashes'}
+    default: admin
+    description: TMOS root password for the VE instances.
+    hidden: true
+    label: F5 VE Root User Password
+    type: string
+  f5_ve_admin_username:
+    type: string
+    label: F5 VE Admin UserName
+    description: Custom Admin User to Create
+  f5_ve_admin_password:
+    constraints:
+    - {allowed_pattern: '[a-zA-Z0-9_-]*', description: 'Password in templates are
+        limited to alpha, numeric, underscore, and dashes'}
+    default: admin
+    description: TMOS admin password for the VE instances.
+    hidden: true
+    label: F5 VE Admin User Password
+    type: string
+  f5_ve_os_image:
+    constraints:
+    - {custom_constraint: glance.image}
+    description: The image to be used on the TMOS VE instance.
+    label: F5 VE Image
+    type: string
+  f5_ve_os_flavor:
+    constraints:
+    - {custom_constraint: nova.flavor}
+    default: m1.small
+    description: Type of instance (flavor) to be used for the TMOS VE instance.
+    label: F5 VE Flavor
+    type: string
+  use_config_drive: {default: true, description: Use config drive to provider meta
+      and user data to the orchestration instance., label: Use Config Drive for Orchestration
+      Server, type: boolean}
+  f5_bigiq_host:
+    type: string
+    label: BIG-IQ Host Address
+    description: IP address BIG-IQ License Server
+  f5_bigiq_username:
+    type: string
+    label: BIG-IQ UserName
+    description: BIG-IQ user with privledges to license BIG-IQ. Can be admin or manager
+    hidden: true  
+  f5_bigiq_password:
+    type: string
+    label: BIG-IQ User Password
+    description: Password for BIG-IQ user that will license BIG-IP.
+    hidden: true 
+  f5_bigiq_license_pool_name:
+    type: string
+    label: Name of BIG-IQ License Pool
+    description: Name of BIG-IQ License Pool
+    hidden: true 
+  f5_bigip_mgmt_address:
+    type: string
+    label: BIG-IP Management Address used by BIG-IQ
+    description: Routable BIG-IP Management Address used by BIG-IQ. This may be a translated address.
+    default: default
+    hidden: true
+parameter_groups:
+- parameters: [f5_ve_os_image, f5_ve_os_flavor, f5_ve_admin_username, f5_ve_admin_password,
+    f5_ve_root_password, f5_ve_os_mgmt_network, f5_ve_os_external_network, f5_ve_os_ha_network, f5_ve_os_ha_network_mtu, f5_ve_os_network_1,
+    f5_ve_os_network_1_name, f5_ve_os_network_1_mtu ]
+- parameters: [f5_bigiq_host, f5_bigiq_username, f5_bigiq_password, f5_bigiq_license_pool_name, f5_bigip_mgmt_address ]
+- parameters: [use_config_drive]
+resources:
+  ve1:
+    properties:
+      ve_image: {get_param: f5_ve_os_image}
+      ve_flavor: {get_param: f5_ve_os_flavor}
+      admin_password: {get_param: f5_ve_admin_password}
+      admin_username: {get_param: f5_ve_admin_username}
+      root_password: {get_param: f5_ve_root_password}
+      mgmt_network: {get_param: f5_ve_os_mgmt_network}
+      ha_network: {get_param: f5_ve_os_ha_network}
+      ha_network_mtu: {get_param: f5_ve_os_ha_network_mtu}
+      network_1: {get_param: f5_ve_os_network_1}
+      network_1_mtu: {get_param: f5_ve_os_network_1_mtu}
+      network_1_name: {get_param: f5_ve_os_network_1_name}
+      use_config_drive: {get_param: use_config_drive}
+      bigiq_host: { get_param: f5_bigiq_host }
+      bigiq_user: { get_param: f5_bigiq_username }
+      bigiq_password: { get_param: f5_bigiq_password }
+      bigiq_license_pool_name: { get_param: f5_bigiq_license_pool_name }
+    type: https://raw.githubusercontent.com/f5devcentral/f5-cloud-init-examples/master/openstack-heat/cluster/3nic/f5_ve_cluster_member1_3_nic_bigiq_license.yaml
+  ve1_floating_ip:
+    depends_on: ve1
+    properties:
+      floating_network: {get_param: f5_ve_os_external_network}
+      port_id:
+        get_attr: [ve1, mgmt_port]
+    type: OS::Neutron::FloatingIP
+  ve2:
+    depends_on: ve1
+    properties:
+      ve_image: {get_param: f5_ve_os_image}
+      ve_flavor: {get_param: f5_ve_os_flavor}
+      admin_password: {get_param: f5_ve_admin_password}
+      admin_username: {get_param: f5_ve_admin_username}
+      root_password: {get_param: f5_ve_root_password}
+      mgmt_network: {get_param: f5_ve_os_mgmt_network}
+      ha_network: {get_param: f5_ve_os_ha_network}
+      ha_network_mtu: {get_param: f5_ve_os_ha_network_mtu}
+      network_1: {get_param: f5_ve_os_network_1}
+      network_1_mtu: {get_param: f5_ve_os_network_1_mtu}
+      network_1_name: {get_param: f5_ve_os_network_1_name}
+      use_config_drive: {get_param: use_config_drive}
+      cluster_peer_address: {get_attr: [ve1, resource.mgmt_port, fixed_ips, 0, ip_address]}
+      bigiq_host: { get_param: f5_bigiq_host }
+      bigiq_user: { get_param: f5_bigiq_username }
+      bigiq_password: { get_param: f5_bigiq_password }
+      bigiq_license_pool_name: { get_param: f5_bigiq_license_pool_name }
+    type: https://raw.githubusercontent.com/f5devcentral/f5-cloud-init-examples/master/openstack-heat/cluster/3nic/f5_ve_cluster_member2_3_nic_bigiq_license.yaml
+  ve2_floating_ip:
+    depends_on: ve2
+    properties:
+      floating_network: {get_param: f5_ve_os_external_network}
+      port_id:
+        get_attr: [ve2, mgmt_port]
+    type: OS::Neutron::FloatingIP
+outputs: 
+  ve1_instance_id:
+    description: ID of the instance
+    value:
+      get_attr: [ve1, resource.ve_instance]
+  ve1_instance_name:
+    description: Name of the instance
+    value:
+      get_attr: [ve1, resource.ve_instance, name]
+  ve1_mgmt_cidr:
+    description: The mgmt cidr of f5 VE instance
+    value:
+      get_attr: [ve1, resource.mgmt_port, subnets, 0, cidr]
+  ve1_mgmt_ip:
+    description: The mgmt IP address of f5 ve instance
+    value:
+      get_attr: [ve1, resource.mgmt_port, fixed_ips, 0, ip_address]
+  ve1_mgmt_mac:
+    description: The mgmt MAC address of f5 VE instance
+    value:
+      get_attr: [ve1, resource.mgmt_port, mac_address]
+  ve1_mgmt_port:
+    description: The mgmt port id of f5 VE instance
+    value:
+      get_attr: [ve1, resource.mgmt_port]
+  ve1_mgmt_port_floating_ip:
+    description: The floating IP to the mgmt interface of the f5 VE instance
+    value:
+      get_attr: [ve1_floating_ip, floating_ip_address]
+  ve1_ha_ip:
+    description: The HA IP address of f5 ve instance
+    value:
+      get_attr: [ve1, resource.ha_port, fixed_ips, 0, ip_address]
+  ve1_ha_mac:
+    description: The HA MAC address of f5 VE instance
+    value:
+      get_attr: [ve1, resource.ha_port, mac_address]
+  ve1_ha_port:
+    description: The ha port id of f5 VE instance
+    value:
+      get_attr: [ve1, resource.ha_port]
+  ve1_network_1_cidr:
+    description: The 1.2 cidr of f5 VE instance
+    value:
+      get_attr: [ve1, resource.network_1_port, subnets, 0, cidr]
+  ve1_network_1_ip:
+    description: The 1.2 Nonfloating SelfIP address of f5 ve instance
+    value:
+      get_attr: [ve1, resource.network_1_port, fixed_ips, 0, ip_address]
+  ve1_network_1_mac:
+    description: The 1.2 MAC address of f5 VE instance
+    value:
+      get_attr: [ve1, resource.network_1_port, mac_address]
+  ve1_network_1_port:
+    description: The 1.2 port id of f5 VE instance
+    value:
+      get_attr: [ve1, resource.network_1_port]
+  ve2_instance_id:
+    description: ID of the instance
+    value:
+      get_attr: [ve2, resource.ve_instance]
+  ve2_instance_name:
+    description: Name of the instance
+    value:
+      get_attr: [ve2, resource.ve_instance, name]
+  ve2_mgmt_cidr:
+    description: The mgmt cidr of f5 VE instance
+    value:
+      get_attr: [ve2, resource.mgmt_port, subnets, 0, cidr]
+  ve2_mgmt_ip:
+    description: The mgmt IP address of f5 ve instance
+    value:
+      get_attr: [ve2, resource.mgmt_port, fixed_ips, 0, ip_address]
+  ve2_mgmt_mac:
+    description: The mgmt MAC address of f5 VE instance
+    value:
+      get_attr: [ve2, resource.mgmt_port, mac_address]
+  ve2_mgmt_port:
+    description: The mgmt port id of f5 VE instance
+    value:
+      get_attr: [ve2, mgmt_port]
+  ve2_mgmt_port_floating_ip:
+    description: The floating IP to the mgmt interface of the f5 VE instance
+    value:
+      get_attr: [ve2_floating_ip, floating_ip_address]
+  ve2_ha_ip:
+    description: The HA IP address of f5 ve instance
+    value:
+      get_attr: [ve2, resource.ha_port, fixed_ips, 0, ip_address]
+  ve2_ha_mac:
+    description: The HA MAC address of f5 VE instance
+    value:
+      get_attr: [ve2, resource.ha_port, mac_address]
+  ve2_ha_port:
+    description: The ha port id of f5 VE instance
+    value:
+      get_attr: [ve2, ha_port]
+  ve2_network_1_cidr:
+    description: The 1.2 cidr of f5 VE instance
+    value:
+      get_attr: [ve2, resource.network_1_port, subnets, 0, cidr]
+  ve2_network_1_ip:
+    description: The 1.2 Nonfloating SelfIP address of f5 ve instance
+    value:
+      get_attr: [ve2, resource.network_1_port, fixed_ips, 0, ip_address]
+  ve2_network_1_mac:
+    description: The 1.2 MAC address of f5 VE instance
+    value:
+      get_attr: [ve2, resource.network_1_port, mac_address]
+  ve2_network_1_port:
+    description: The 1.2 port id of f5 VE instance
+    value:
+      get_attr: [ve2, network_1_port]
