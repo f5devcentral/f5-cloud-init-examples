@@ -21,6 +21,10 @@ parameters:
     label: Use Config Drive
     description: Use config drive to provider meta and user data.
     default: false 
+  f5_ve_os_ssh_key:
+    type: string
+    default: demokeypair
+    description: Name of an existing key pair to use for the instance
   admin_username:
     type: string
     label: F5 VE Admin UserName
