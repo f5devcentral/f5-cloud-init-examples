@@ -49,7 +49,7 @@ write_files:
       --big-iq-user ${BIGIQ_USER} \
       --big-iq-password ${BIGIQ_PASSWORD} \
       --license-pool-name ${BIGIQ_LICENSE_POOL_NAME} \
-      --big-ip-mgmt-address ${BIGIQ_MGMT_ADDRESS} \
+      --big-ip-mgmt-address ${BIGIP_MGMT_ADDRESS} \
       --ping www.f5.com 30 15 \
 
 
@@ -104,7 +104,7 @@ write_files:
       BIGIQ_USER=bigiq_user
       BIGIQ_PASSWORD=bigiq_password
       BIGIQ_LICENSE_POOL_NAME=my_bigiq_license_pool
-      BIGIP_MGMT_ADDRESS=$(egrep -m 1 -A 1 eth0 /var/lib/dhclient/dhclient.leases | egrep -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
+      BIGIP_MGMT_ADDRESS=$(egrep -m 1 -A 1 mgmt /var/lib/dhclient/dhclient.leases | egrep -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
 
   # keys/certificates/etc.
 
