@@ -104,6 +104,8 @@ write_files:
       BIGIQ_USER=bigiq_user
       BIGIQ_PASSWORD=bigiq_password
       BIGIQ_LICENSE_POOL_NAME=my_bigiq_license_pool
+      # Note: BIGIP_MGMT_ADDRESS = address reachable/routable from the BIG-IQ. 
+      # It's set to its simple local address below but could be a NAT / translation address
       BIGIP_MGMT_ADDRESS=$(egrep -m 1 -A 1 mgmt /var/lib/dhclient/dhclient.leases | egrep -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
 
   # keys/certificates/etc.
