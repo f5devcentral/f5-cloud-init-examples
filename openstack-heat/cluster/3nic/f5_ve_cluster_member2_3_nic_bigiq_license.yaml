@@ -210,7 +210,7 @@ resources:
 
                   # Download Onboarding Libs. 
                   # Could be pre-packaged or hosted internally
-                  curl -o /config/cloud/f5-cloud-libs.tar.gz --silent --fail --retry 20 -L https://api.github.com/repos/F5Networks/f5-cloud-libs/tarball/licensepool
+                  curl -o /config/cloud/f5-cloud-libs.tar.gz --silent --fail --retry 20 -L https://api.github.com/repos/F5Networks/f5-cloud-libs/tarball/develop
                   tar xvzf /config/cloud/f5-cloud-libs.tar.gz -C /config/cloud/
                   mv /config/cloud/F5Networks-f5-cloud-libs-* /config/cloud/f5-cloud-libs
                   cd /config/cloud/f5-cloud-libs
